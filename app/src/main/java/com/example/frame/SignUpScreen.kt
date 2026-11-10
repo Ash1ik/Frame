@@ -39,7 +39,6 @@ fun SignUpScreen() {
     val context = LocalContext.current
 
     val passwordError = submitted && password.isBlank()
-    val confirmPasswordError = submitted && (confirmPassword.isBlank() || password != confirmPassword)
 
     Column(
         modifier = Modifier
