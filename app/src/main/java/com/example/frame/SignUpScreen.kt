@@ -27,7 +27,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun SignUpScreen() {
+fun SignUpScreen(onLoginClick: () -> Unit) {
 
     var name by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
@@ -37,8 +37,6 @@ fun SignUpScreen() {
     var submitted by rememberSaveable { mutableStateOf(false) }
 
     val context = LocalContext.current
-
-    val passwordError = submitted && password.isBlank()
 
     Column(
         modifier = Modifier
@@ -75,7 +73,7 @@ fun SignUpScreen() {
             },
             label = "Password",
             modifier = Modifier,
-            errorMessage = if (passwordError) "Password is Required" else null
+            errorMessage = if (submitted && password.isBlank()) "Password is Required" else null
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -122,6 +120,12 @@ fun SignUpScreen() {
             Text(
                 text = "Create Account"
             )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TextButton(onClick = onLoginClick) {
+            Text("Already have an account? Sign in")
         }
     }
 }
