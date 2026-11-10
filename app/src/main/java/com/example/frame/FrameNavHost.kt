@@ -46,7 +46,16 @@ fun FrameNavHost (
         }
 
         composable(route = "home") {
-            HomeScreen()
+            HomeScreen(
+                onLogoutClick = {
+                    navController.navigate("login") {
+                        popUpTo("home") {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
 
     }
