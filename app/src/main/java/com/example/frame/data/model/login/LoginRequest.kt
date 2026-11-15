@@ -1,4 +1,4 @@
-package com.example.frame.data.login
+package com.example.frame.data.model.login
 
 data class LoginRequest(
     val email: String,

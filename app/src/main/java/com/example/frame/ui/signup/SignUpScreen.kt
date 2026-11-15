@@ -1,5 +1,4 @@
-package com.example.frame.login.ui
-
+package com.example.frame.ui.signup
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -26,32 +25,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.frame.login.viewmodel.LoginViewModel
-import com.example.frame.signup.ui.FramePasswordField
-import com.example.frame.signup.ui.FrameTextField
+import com.example.frame.ui.components.FramePasswordField
+import com.example.frame.ui.components.FrameTextField
 
 @Composable
-fun LoginScreen(
-    onSignUpClick: () -> Unit,
-    onLoginSuccess: () -> Unit,
-    loginViewModel: LoginViewModel = viewModel()
+fun SignUpScreen(
+    onLoginClick: () -> Unit,
+    signupViewModel: SignupViewModel = viewModel()
 ) {
+    val uiState = signupViewModel.uiState
 
-    val uiState = loginViewModel.uiState
-
-    LaunchedEffect(uiState.isLoggedIn) {
-        if (uiState.isLoggedIn) {
-            onLoginSuccess()
+    LaunchedEffect(uiState.isSignupSuccessful) {
+        if (uiState.isSignupSuccessful) {
+            onLoginClick()
         }
     }
 
-       if (uiState.isLoggedIn) {
-        onLoginSuccess()
-       }
-
-
+    var name by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
+    var confirmPassword by rememberSaveable { mutableStateOf("") }
+
     var submitted by rememberSaveable { mutableStateOf(false) }
 
     Column(
@@ -61,6 +55,16 @@ fun LoginScreen(
             .verticalScroll(rememberScrollState())
             .padding(20.dp)
     ) {
+        FrameTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = "Name",
+            modifier = Modifier,
+            errorMessage = if (submitted && name.isBlank()) "Name is Required" else null
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         FrameTextField(
             value = email,
             onValueChange = { email = it },
@@ -81,14 +85,38 @@ fun LoginScreen(
             errorMessage = if (submitted && password.isBlank()) "Password is Required" else null
         )
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        FramePasswordField(
+            value = confirmPassword,
+            onValueChange = {
+                confirmPassword = it
+            },
+            label = "Confirm Password",
+            modifier = Modifier,
+            errorMessage = when {
+                !submitted -> null
+                confirmPassword.isBlank() -> "Confirm password is required"
+                password != confirmPassword -> "Passwords do not match"
+                else -> null
+            }
+        )
+
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
             onClick = {
                 submitted = true
 
-                if (email.isNotBlank() && password.isNotBlank()) {
-                    loginViewModel.login(email = email, password = password)
+                val isFormValid =
+                    name.isNotBlank() &&
+                            email.isNotBlank() &&
+                            password.isNotBlank() &&
+                            confirmPassword.isNotBlank() &&
+                            password == confirmPassword
+
+                if (isFormValid) {
+                    signupViewModel.signup(name, email, password)
                 }
             },
             enabled = !uiState.isLoading,
@@ -102,13 +130,12 @@ fun LoginScreen(
                     strokeWidth = 2.dp
                 )
             } else {
-                Text(
-                    text = "Sign in"
-                )
+                Text("Create Account")
             }
         }
 
         uiState.errorMessage?.let { message ->
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = message,
                 color = MaterialTheme.colorScheme.error
@@ -118,11 +145,10 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         TextButton(
-            onClick = onSignUpClick,
+            onClick = onLoginClick,
             enabled = !uiState.isLoading
         ) {
-            Text("Create an account")
+            Text("Already have an account? Sign in")
         }
-
     }
 }

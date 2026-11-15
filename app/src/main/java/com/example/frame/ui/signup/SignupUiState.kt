@@ -1,4 +1,4 @@
-package com.example.frame.signup.viewmodel
+package com.example.frame.ui.signup
 
 data class SignupUiState (
     val isLoading: Boolean = false,

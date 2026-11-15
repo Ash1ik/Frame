@@ -1,18 +1,18 @@
-package com.example.frame
+package com.example.frame.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.frame.login.ui.LoginScreen
-import com.example.frame.signup.ui.SignUpScreen
+import com.example.frame.ui.home.HomeScreen
+import com.example.frame.ui.login.LoginScreen
+import com.example.frame.ui.signup.SignUpScreen
 
 @Composable
-fun FrameNavHost (
+fun FrameNavHost(
     modifier: Modifier
 ) {
-
     val navController = rememberNavController()
 
     NavHost(
@@ -20,7 +20,6 @@ fun FrameNavHost (
         startDestination = "login",
         modifier = modifier
     ) {
-
         composable(route = "login") {
             LoginScreen(
                 onSignUpClick = {
@@ -59,7 +58,5 @@ fun FrameNavHost (
                 }
             )
         }
-
     }
-
 }

@@ -1,11 +1,11 @@
-package com.example.frame.login.viewmodel
+package com.example.frame.ui.login
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.frame.AuthRepository
+import com.example.frame.data.repository.AuthRepository
 import kotlinx.coroutines.launch
 import okio.IOException
 
@@ -27,7 +27,7 @@ class LoginViewModel: ViewModel() {
 
         viewModelScope.launch {
             try {
-                val success = repository.login(email,password)
+                val success = repository.login(email, password)
 
                 uiState = uiState.copy(
                     isLoggedIn = success

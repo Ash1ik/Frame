@@ -1,11 +1,11 @@
-package com.example.frame.signup.viewmodel
+package com.example.frame.ui.signup
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.frame.AuthRepository
+import com.example.frame.data.repository.AuthRepository
 import kotlinx.coroutines.launch
 import okio.IOException
 
@@ -27,7 +27,7 @@ class SignupViewModel: ViewModel() {
 
         viewModelScope.launch {
             try {
-                val success = repository.signup(name,email,password)
+                val success = repository.signup(name, email, password)
 
                 uiState = uiState.copy(isSignupSuccessful = success)
             } catch (e: IOException) {
@@ -36,7 +36,7 @@ class SignupViewModel: ViewModel() {
                 )
             } catch (e: IllegalArgumentException) {
                 uiState = uiState.copy(
-                    errorMessage = e.message ?: "Please check your sigup details"
+                    errorMessage = e.message ?: "Please check your signup details"
                 )
             } finally {
                 uiState = uiState.copy(

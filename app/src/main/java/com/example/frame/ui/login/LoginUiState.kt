@@ -1,7 +1,7 @@
-package com.example.frame.login.viewmodel
+package com.example.frame.ui.login
 
 data class LoginUiState (
     val isLoading: Boolean = false,
-    val isLoggedIn : Boolean = false,
+    val isLoggedIn: Boolean = false,
     val errorMessage: String? = null
 )

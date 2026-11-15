@@ -1,4 +1,4 @@
-package com.example.frame.data.signup
+package com.example.frame.data.model.signup
 
 data class SignupResponse(
     val id: Long,
