@@ -1,4 +1,4 @@
-package com.example.frame
+package com.example.frame.login.viewmodel
 
 data class LoginUiState (
     val isLoading: Boolean = false,

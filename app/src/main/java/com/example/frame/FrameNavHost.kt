@@ -5,6 +5,8 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.frame.login.ui.LoginScreen
+import com.example.frame.signup.ui.SignUpScreen
 
 @Composable
 fun FrameNavHost (
@@ -28,7 +30,7 @@ fun FrameNavHost (
                 },
                 onLoginSuccess = {
                     navController.navigate("home") {
-                        popUpTo("login"){
+                        popUpTo("login") {
                             inclusive = true
                         }
                         launchSingleTop = true

@@ -1,6 +1,5 @@
-package com.example.frame
+package com.example.frame.signup.ui
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,25 +8,42 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.frame.signup.viewmodel.SignupViewModel
 
 @Composable
-fun SignUpScreen(onLoginClick: () -> Unit) {
+fun SignUpScreen(
+    onLoginClick: () -> Unit,
+    signupViewModel: SignupViewModel = viewModel()
+) {
+
+    val uiState = signupViewModel.uiState
+
+    LaunchedEffect(uiState.isSignupSuccessful) {
+        if (uiState.isSignupSuccessful) {
+            onLoginClick()
+        }
+    }
+
 
     var name by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
@@ -36,7 +52,6 @@ fun SignUpScreen(onLoginClick: () -> Unit) {
 
     var submitted by rememberSaveable { mutableStateOf(false) }
 
-    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -107,24 +122,37 @@ fun SignUpScreen(onLoginClick: () -> Unit) {
                     password == confirmPassword
 
                 if (isFormValid) {
-
-                    Toast.makeText(
-                        context, "Validation Passed", Toast.LENGTH_SHORT
-                    ).show()
+                    signupViewModel.signup(name,email,password)
                 }
             },
+            enabled = !uiState.isLoading,
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 48.dp)
         ) {
-            Text(
-                text = "Create Account"
-            )
+            if (uiState.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text("Create Account")
+            }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        uiState.errorMessage?.let { message ->
+            Text(
+                text = message,
+                color = MaterialTheme.colorScheme.error
+            )
 
-        TextButton(onClick = onLoginClick) {
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        TextButton(
+            onClick = onLoginClick,
+            enabled = !uiState.isLoading
+        ) {
             Text("Already have an account? Sign in")
         }
     }
