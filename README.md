@@ -1,102 +1,137 @@
-# Frame 📱
+﻿# Frame
 
-**Frame** is a modern, production-ready Android application built with **Jetpack Compose** and **Material 3**, adhering strictly to the **MVVM (Model-View-ViewModel)** architectural pattern and clean separation of concerns.
+Frame is a native Android authentication app built with Kotlin, Jetpack Compose, and Material 3. It connects to a REST API so users can create an account, sign in, view their profile, and sign out.
 
----
+## Project goal
 
-## 🎯 Project Goal
+Frame provides a small, understandable foundation for Android apps that need authentication. It demonstrates how Compose screens, ViewModels, a repository, and a network client work together while keeping UI and data access separate.
 
-The primary goal of Frame is to provide a robust, scalable, and idiomatic Android boilerplate and application template demonstrating:
-- **Secure Authentication Flow**: User login and registration with token-based authorization (`Bearer` tokens).
-- **Session Management**: Persistent memory token store (`TokenStore`) with automatic session expiry handling and redirection.
-- **Profile Management**: Fetching and displaying authenticated user profile details (`/users/me`).
-- **Modern UI / UX**: Declarative UI built entirely with Jetpack Compose and Material 3 design guidelines.
+The current scope is the Android client and its authentication flow. A compatible backend must be run separately; server code is not included in this repository.
 
----
+## Features
 
-## 🏛️ Architecture & Folder Mapping
+- **Registration:** Create an account with a name, email, and password. Required-field and password-confirmation checks provide feedback before submission. Successful registration returns to sign-in.
+- **Login:** Exchange an email and password for an access token, then open the home screen.
+- **Profile:** Fetch and display the signed-in user's ID, name, and email.
+- **Request feedback:** Show loading states, validation feedback, network errors, and authentication errors.
+- **Logout and session handling:** Clear the token on logout or an unauthorized profile response and return to sign-in.
 
-Frame follows a clean **MVVM (Model-View-ViewModel)** architecture combined with a feature- and layer-based package structure. This ensures high testability, maintainability, and clear separation of concerns across the Data, Domain/Business Logic, and Presentation layers.
+## Architecture
 
-### Architecture Data Flow & Diagram
+Frame uses **MVVM (Model-View-ViewModel)** with a repository in a single Android application module.
 
-```mermaid
-graph TD
-    UI[Composable Screen <br/> LoginScreen / SignUpScreen / HomeScreen] -->|User Action / Event| VM[ViewModel <br/> LoginViewModel / SignupViewModel / HomeViewModel]
-    VM -->|CoroutineScope / Business Logic| REPO[AuthRepository]
-    REPO -->|API Request| API[Retrofit AuthApi & ApiClient]
-    API -->|HTTP Response / DTO| REPO
-    REPO -->|Save Token / Data| STORE[TokenStore / Local]
-    VM -->|Updates UIState StateFlow| UI
-```
+![Frame architecture: Compose screens send actions to ViewModels, which call AuthRepository; the repository accesses an in-memory token store and Retrofit API, and results update UI state.](docs/images/architecture.svg)
 
----
+| Part | Responsibility | Source |
+| --- | --- | --- |
+| Screens and navigation | Render forms and profile information; navigate between login, signup, and home | [`ui/`](app/src/main/java/com/example/frame/ui) |
+| ViewModels and UI state | Run requests in `viewModelScope` and expose state through Compose `mutableStateOf` | Feature packages under [`ui/`](app/src/main/java/com/example/frame/ui) |
+| Repository | Coordinate requests, handle response errors, and save or clear tokens | [`AuthRepository.kt`](app/src/main/java/com/example/frame/data/repository/AuthRepository.kt) |
+| Network client | Configure the base URL, declare REST endpoints, and convert JSON with Gson | [`data/remote/`](app/src/main/java/com/example/frame/data/remote) |
+| Session store | Hold the current access token in memory | [`TokenStore.kt`](app/src/main/java/com/example/frame/data/local/TokenStore.kt) |
 
-## 📂 Project Directory Structure
+For example, signing in follows this path:
+
+1. `LoginScreen` passes credentials to `LoginViewModel`.
+2. The ViewModel calls `AuthRepository.login()` in a coroutine.
+3. The repository sends a request through `ApiClient.authApi` and saves the returned access token in `TokenStore`.
+4. The ViewModel updates UI state, and the screen triggers navigation to home.
+5. `HomeViewModel` loads the profile through the repository using `Authorization: Bearer <token>`.
+
+ViewModels currently construct repositories directly. The API client and token store are singleton objects; there is no separate domain/use-case layer or dependency injection framework.
+
+## Repository layout
 
 ```text
-com.example.frame/
-├── data/
-│   ├── local/
-│   │   └── TokenStore.kt          # In-memory secure token management
-│   ├── model/
-│   │   ├── login/                 # LoginRequest, LoginResponse
-│   │   ├── signup/                # SignupRequest, SignupResponse
-│   │   └── user/                  # ProfileResponse
-│   ├── remote/
-│   │   ├── ApiClient.kt           # Retrofit client configuration
-│   │   └── AuthApi.kt             # REST API endpoints (/auth/login, /auth/signup, /users/me)
-│   └── repository/
-│       └── AuthRepository.kt      # Single source of truth for auth & profile data operations
-├── ui/
-│   ├── components/
-│   │   └── FrameComponents.kt     # Reusable UI components (FrameTextField, FramePasswordField)
-│   ├── home/
-│   │   ├── HomeScreen.kt          # Main dashboard screen
-│   │   └── HomeViewModel.kt       # Profile state & session management
-│   ├── login/
-│   │   ├── LoginScreen.kt         # User sign-in screen
-│   │   ├── LoginViewModel.kt      # Login state & authentication logic
-│   │   └── LoginUiState.kt        # Login UI state holder
-│   ├── navigation/
-│   │   └── FrameNavHost.kt        # Jetpack Navigation Compose graph
-│   ├── signup/
-│   │   ├── SignUpScreen.kt        # User registration screen
-│   │   ├── SignupViewModel.kt     # Signup state & registration logic
-│   │   └── SignupUiState.kt       # Signup UI state holder
-│   └── theme/
-│       ├── Color.kt               # Custom Material 3 color palettes (Light & Dark)
-│       ├── Theme.kt               # MaterialTheme wrapper
-│       └── Type.kt                # Typography styles
-└── MainActivity.kt                # Single Activity host
+app/src/main/
+  java/com/example/frame/
+    MainActivity.kt           # Activity hosting the Compose app
+    data/
+      local/                  # In-memory token store
+      model/                  # Login, signup, and profile request/response models
+      remote/                 # Retrofit client and API interface
+      repository/             # Authentication and profile data access
+    ui/
+      components/             # Shared text and password fields
+      home/                   # Profile screen, ViewModel, and state
+      login/                  # Login screen, ViewModel, and state
+      navigation/             # Login, signup, and home routes
+      signup/                 # Signup screen, ViewModel, and state
+      theme/                  # Material colors, typography, and theme
+  AndroidManifest.xml
+  res/                        # Android resources
+app/src/test/                 # Local unit tests
+app/src/androidTest/          # Device/emulator tests
+docs/images/architecture.svg  # Architecture image displayed above
+gradle/libs.versions.toml     # Dependency and plugin versions
 ```
 
----
+## Technology
 
-## 🧰 Tech Stack
+- Kotlin, Jetpack Compose, and Material 3
+- AndroidX ViewModel, Kotlin coroutines, and Navigation Compose
+- Retrofit with Gson for REST requests and JSON conversion
+- Gradle Kotlin DSL with a version catalog
+- Android 7.0+ (minimum SDK 24); compile and target SDK 37
 
-- **UI Framework**: [Jetpack Compose](https://developer.android.com/jetpack/compose)
-- **Design System**: [Material 3 (M3)](https://m3.material.io/)
-- **Architecture**: MVVM (Model-View-ViewModel), StateFlow / MutableState
-- **Network / HTTP Client**: [Retrofit 2](https://square.github.io/retrofit/) with Gson Converter
-- **Asynchronous Operations**: Kotlin Coroutines & `viewModelScope`
-- **Navigation**: Jetpack Navigation Compose (`2.10.x`)
-- **Lifecycle**: Lifecycle ViewModel Compose (`2.10.x`)
+Exact dependency versions are recorded in [`gradle/libs.versions.toml`](gradle/libs.versions.toml).
 
----
+## Run locally
 
-## 🚀 Getting Started
+### Requirements
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Ash1ik/Frame.git
+- Android Studio compatible with the Android Gradle Plugin version in the version catalog.
+- Android SDK Platform 37 and an emulator or physical device running API 24 or higher.
+- The included Gradle wrapper. The daemon JVM configuration requests **JDK 25** in [`gradle/gradle-daemon-jvm.properties`](gradle/gradle-daemon-jvm.properties).
+- A running backend implementing the API contract below.
+
+### Setup
+
+1. Clone this repository and open its root directory in Android Studio.
+2. Let Gradle sync and install required SDK components. Ensure Android Studio has configured your SDK path in `local.properties`.
+3. Set the backend URL in [`ApiClient.kt`](app/src/main/java/com/example/frame/data/remote/ApiClient.kt). The checked-in URL points to a private LAN address and must be changed for your environment. Keep the trailing `/`:
+
+   ```kotlin
+   .baseUrl("http://10.0.2.2:8080/")
    ```
-2. Open the project in **Android Studio** (Koala / Jellyfish or newer).
-3. Configure your backend base URL in [ApiClient.kt](file:///D:/Frame/app/src/main/java/com/example/frame/data/remote/ApiClient.kt) if running against a local server.
-4. Run the app on an Android Emulator or physical device (`app:assembleDebug`).
 
----
+   On the standard Android Emulator, `10.0.2.2` reaches the development computer. For a physical device, use the computer's reachable LAN address and allow the backend port through its firewall.
 
-## 🤝 Contributing
+4. Start the backend, select a device, and run the `app` configuration in Android Studio.
 
-Contributions, issues, and feature requests are welcome! Feel free to check the issues page or submit a pull request.
+To build a debug APK from the repository root:
+
+```powershell
+# Windows PowerShell
+.\gradlew.bat assembleDebug
+```
+
+```bash
+# macOS / Linux
+./gradlew assembleDebug
+```
+
+The APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
+
+## Backend API contract
+
+Endpoints are declared in [`AuthApi.kt`](app/src/main/java/com/example/frame/data/remote/AuthApi.kt). Request and response field names are defined in [`data/model/`](app/src/main/java/com/example/frame/data/model).
+
+| Method | Path | Request | Expected success |
+| --- | --- | --- | --- |
+| `POST` | `/auth/signup` | JSON: `name`, `email`, `password` | HTTP `201`; response model contains `id`, `name`, `email` |
+| `POST` | `/auth/login` | JSON: `email`, `password` | Successful response with `id`, `name`, `email`, `accessToken`, `tokenType`, `expiresIn`; token must be nonblank |
+| `GET` | `/users/me` | Header: `Authorization: Bearer <token>` | Successful response with `id`, `name`, `email` |
+
+The client handles login `401`, signup `400`/`409`, and profile `401` with specific messages. Other failures display a general error.
+
+## Current limitations
+
+- Tokens live only in process memory. They are lost when the app process ends, and navigation starts at login on launch.
+- There is no token refresh or expiry timer. A profile response of `401` invalidates the session; the login response's `expiresIn` is not used to schedule expiry.
+- The base URL is configured in source, and the manifest allows cleartext HTTP for local development. A production deployment needs HTTPS and appropriate session storage.
+- Test directories contain the default example tests; authentication flows do not yet have dedicated automated coverage.
+
+## Contributing
+
+Open an issue to report a bug or propose a feature. Keep UI changes in the relevant feature package and data access in the data layer. Include the behavior changed and how you verified it; never commit credentials or access tokens.
